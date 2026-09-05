@@ -184,6 +184,9 @@ export const usePlanningStore = defineStore('planning', () => {
   /** Riassunto testuale dell'impatto per la barra proposal (§32.4.2). */
   const impact = computed(() => {
     const changes = proposal.value?.simulation.changes ?? []
+    // Spostare un task dove già si trova è una richiesta legittima che non
+    // cambia il piano: dirlo è più utile che annunciare "0 task spostati".
+    if (!changes.length) return 'Nessun cambiamento al piano'
     const moved = changes.filter((c) => c.old_delivery !== c.new_delivery || c.shift_days !== 0)
     const parts: string[] = [`${changes.length} task spostat${changes.length === 1 ? 'o' : 'i'}`]
     const slip = moved.find((c) => c.shift_days !== 0 && c.new_delivery)
