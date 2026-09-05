@@ -18,16 +18,21 @@ Il token **non va messo in un file del repository** né in un `.env` versionato:
 
 ## C'è una skill che fa già tutto questo
 
-Se usi Claude Code, invece di seguire questo documento a mano puoi installare
-la skill `work-planner`, che incapsula la procedura e un wrapper su `curl`:
+Se usi Claude Code, invece di seguire questo documento a mano installa la skill
+`work-planner`: sta in [`skills/work-planner/`](../skills/work-planner/) di
+questo stesso repository — così se l'API cambia, skill e codice cambiano nello
+stesso commit — e si attiva in **ogni** repo con un symlink:
 
 ```bash
-git clone git@github.com:dodogabrie/claude-skills.git ~/.claude/skills
+git clone https://github.com/dodogabrie/work-manager.git ~/Progetti/work-manager
+mkdir -p ~/.claude/skills
+ln -sfn ~/Progetti/work-manager/skills/work-planner ~/.claude/skills/work-planner
 ```
 
-Vale per ogni repository, non solo per quello in cui l'hai installata. Il
-resto di questo documento resta la specifica dell'API, utile a chi la chiama
-da altro.
+Un `git pull` sul repository aggiorna anche la skill.
+
+Il resto di questo documento resta la specifica dell'API, utile a chi la chiama
+da fuori Claude Code.
 
 ## Le cinque regole da conoscere prima di scrivere
 

@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Piccolo wrapper su curl per l'API di Work Planner: base URL, token e JSON in
+# un posto solo, così le chiamate nella conversazione restano leggibili.
+#
+#   wp context
+#   wp get  /api/proposals
+#   wp post /api/inbox/quick-add '{"title":"..."}'
+#   wp post /api/proposals/<id>/approve
+set -euo pipefail
+
+BASE="${WORK_PLANNER_URL:-https://work-planner.edoardogabrielli.com}"
+TOKEN_FILE="${WORK_PLANNER_TOKEN_FILE:-$HOME/.config/work-planner/token}"
+
+if [[ ! -r "$TOKEN_FILE" ]]; then
+  echo "Token non trovato in $TOKEN_FILE." >&2
+  echo "Crealo da Work Planner: Impostazioni -> Token API." >&2
+  exit 2
+fi
+TOKEN=$(< "$TOKEN_FILE")
+
+req() { # metodo, path, [body]
+  local method=$1 path=$2 body=${3:-}
+  local args=(-sS -m 30 -X "$method" -H "Authorization: Bearer $TOKEN"
+              -w '\n%{http_code}' "$BASE$path")
+  [[ -n $body ]] && args+=(-H 'Content-Type: application/json' -d "$body")
+
+  local out code
+  out=$(curl "${args[@]}")
+  code=${out##*$'\n'}
+  out=${out%$'\n'*}
+
+  # Il codice conta: un 200 con dentro una proposal non ha cambiato il piano,
+  # un 409 vuol dire che va ricalcolata, un 422 che c'è un conflitto hard.
+  if [[ $code -ge 400 ]]; then
+    echo "HTTP $code" >&2
+    echo "$out" >&2
+    return 1
+  fi
+  if command -v jq >/dev/null 2>&1; then echo "$out" | jq .; else echo "$out"; fi
+}
+
+case "${1:-}" in
+  context) req GET /api/planning/context ;;
+  get)     req GET "$2" ;;
+  post)    req POST "$2" "${3:-}" ;;
+  patch)   req PATCH "$2" "${3:-}" ;;
+  delete)  req DELETE "$2" ;;
+  *) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 1 ;;
+esac
