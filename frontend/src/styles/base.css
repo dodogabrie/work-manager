@@ -1,0 +1,102 @@
+/* Design tokens. Mobile-first: i breakpoint sono 768 (tablet) e 1024 (desktop),
+   coerenti col piano. Nessun framework CSS: l'app ha poche superfici e un
+   framework costerebbe più di quanto risparmi. */
+
+:root {
+  --bg: #fbfbfa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f2;
+  --border: #e3e3df;
+  --text: #1c1c1a;
+  --text-dim: #6b6b66;
+  --accent: #2f6f4f;
+  --accent-soft: #e6f0ea;
+  --warning: #9a6b12;
+  --warning-soft: #fdf3dd;
+  --danger: #a33329;
+  --danger-soft: #fbe9e7;
+  --meeting: #8a8a84;
+  --meeting-soft: #ececea;
+  --absence: #6b5ea8;
+  --absence-soft: #eeebf7;
+
+  --radius: 10px;
+  --gap: 12px;
+  --tap: 44px;            /* target touch minimo */
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #161614;
+    --surface: #1f1f1d;
+    --surface-2: #272725;
+    --border: #353532;
+    --text: #ececea;
+    --text-dim: #9b9b95;
+    --accent: #6fbf92;
+    --accent-soft: #1e3229;
+    --warning-soft: #33290f;
+    --danger-soft: #34201d;
+    --meeting-soft: #2a2a28;
+    --absence-soft: #262238;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  min-height: var(--tap);
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+input, textarea, select {
+  font: inherit;
+  min-height: var(--tap);
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Il colore non è mai l'unico veicolo di informazione: ogni pastiglia porta
+   anche un'etichetta testuale. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
