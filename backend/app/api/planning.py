@@ -42,13 +42,8 @@ CONSTRAINTS = [
 
 
 def _segments(session, start: date, end: date) -> list[PlanningSegment]:
-    return list(
-        session.scalars(
-            select(PlanningSegment)
-            .where(PlanningSegment.day >= start, PlanningSegment.day <= end)
-            .order_by(PlanningSegment.day, PlanningSegment.task_id)
-        )
-    )
+    # L'ordine di lettura è definito una volta sola nel service (§33, R10).
+    return list(session.scalars(service.segments_query(start, end)))
 
 
 def _days(session, segments: list[PlanningSegment], start: date, end: date):

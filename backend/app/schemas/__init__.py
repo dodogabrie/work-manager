@@ -189,6 +189,20 @@ class CapacityExceptionPatchIn(BaseModel):
     note: str | None = None
 
 
+HEX_COLOR = r"^#[0-9a-fA-F]{6}$"
+
+
+class ProjectIn(BaseModel):
+    name: str
+    color: str | None = Field(default=None, pattern=HEX_COLOR)
+
+
+class ProjectPatchIn(BaseModel):
+    name: str | None = None
+    color: str | None = Field(default=None, pattern=HEX_COLOR)
+    archived: bool | None = None
+
+
 class ShareLinkIn(BaseModel):
     label: str
     kind: Literal["manager", "ics"] = "manager"
@@ -256,6 +270,41 @@ class TaskOrProposal(BaseModel):
     """Un'operazione che tocca il piano restituisce una proposal, non un task (§3.3)."""
 
     task: TaskInternalView | None = None
+    proposal: ProposalView | None = None
+
+
+class CalendarConnectionIn(BaseModel):
+    """§32.18: un feed ICS è solo un URL sottoscritto, nessun OAuth."""
+
+    name: str
+    ics_url: str
+    enabled: bool = True
+
+
+class CalendarConnectionPatchIn(BaseModel):
+    name: str | None = None
+    ics_url: str | None = None
+    enabled: bool | None = None
+
+
+class CalendarConnectionView(BaseModel):
+    model_config = ORM
+
+    id: uuid.UUID
+    name: str
+    ics_url: str
+    enabled: bool
+    last_synced_at: datetime | None = None
+    last_sync_error: str | None = None
+    created_at: datetime
+
+
+class SyncResultView(BaseModel):
+    """Esito di un sync: cosa è cambiato nel calendario e se ha prodotto una proposal."""
+
+    connection: CalendarConnectionView
+    events_upserted: int = 0
+    events_cancelled: int = 0
     proposal: ProposalView | None = None
 
 

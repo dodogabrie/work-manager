@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     session_secret: str = "dev-insecure-change-me"
     public_base_url: str = "http://localhost:8000"
     tz: str = "Europe/Rome"
+    #: APScheduler in-process (§32). Off nei test e nei comandi CLI.
+    enable_jobs: bool = True
 
 
 settings = Settings()

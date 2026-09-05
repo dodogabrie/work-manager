@@ -188,11 +188,37 @@ def _naive(value: datetime) -> datetime:
     return value.replace(tzinfo=None) if value.tzinfo else value
 
 
+def segments_query(start: date | None = None, end: date | None = None):
+    """Segmenti in ordine di lettura: per giorno e, dentro il giorno, per
+    posizione in coda.
+
+    Unico punto in cui questo ordine è definito. Ordinare per task_id darebbe
+    una sequenza casuale (è un UUID) e diversa fra due query sullo stesso piano,
+    contro §33 e l'explainability di R10.
+    """
+    stmt = (
+        select(PlanningSegment)
+        .join(Task, Task.id == PlanningSegment.task_id)
+        .order_by(
+            PlanningSegment.day,
+            PlanningSegment.locked.desc(),
+            Task.queue_position,
+            Task.created_at,
+            Task.id,
+        )
+    )
+    if start is not None:
+        stmt = stmt.where(PlanningSegment.day >= start)
+    if end is not None:
+        stmt = stmt.where(PlanningSegment.day <= end)
+    return stmt
+
+
 def current_plan(session: Session) -> ScheduleResult:
     """Il piano persistito, riletto senza rischedulare nulla."""
     segments = [
         DomainSegment(str(s.task_id), s.day, s.minutes, s.locked)
-        for s in session.scalars(select(PlanningSegment).order_by(PlanningSegment.day))
+        for s in session.scalars(segments_query())
     ]
     delivery: dict[str, date] = {}
     for seg in segments:

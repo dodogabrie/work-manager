@@ -1,5 +1,6 @@
-/* Rispecchia i DTO del backend. Gli effort sono SEMPRE in minuti (§11.1):
-   la conversione in ore avviene solo nella resa. */
+/* Rispecchia i DTO del backend (app/schemas/__init__.py).
+   Gli effort sono SEMPRE in minuti (§11.1): la conversione in ore avviene solo
+   nella resa, in util/time.ts. */
 
 export type TaskStatus =
   | 'INBOX' | 'PLANNED' | 'IN_PROGRESS' | 'READY' | 'DELIVERED'
@@ -16,9 +17,19 @@ export interface Task {
   estimate_confidence: string | null
   target_delivery_date: string | null
   fixed_delivery_date: string | null
-  queue_position: string | null
+  queue_position: string | number | null
+  created_at: string
+  updated_at: string
 }
 
+export interface Project {
+  id: string
+  name: string
+  color: string
+  archived: boolean
+}
+
+/** GET /api/planning -> segmenti confermati. */
 export interface PlanningSegment {
   task_id: string
   day: string
@@ -26,13 +37,32 @@ export interface PlanningSegment {
   locked: boolean
 }
 
+/** simulation.segments usa `date`, non `day` (services/planning.segment_json). */
+export interface SimulatedSegment {
+  task_id: string
+  date: string
+  minutes: number
+  locked: boolean
+}
+
 export interface DayCapacity {
   day: string
-  base_minutes: number
-  meeting_minutes: number
   available_minutes: number
   planned_minutes: number
-  exception: { kind: string; note: string | null } | null
+}
+
+export interface CapacityException {
+  id: string
+  day: string
+  minutes: number
+  kind: 'VACATION' | 'LEAVE' | 'REDUCED' | 'EXTRA'
+  note: string | null
+}
+
+export interface CapacityView {
+  weekly_minutes: Record<string, number>
+  exceptions: CapacityException[]
+  days: DayCapacity[]
 }
 
 export interface PlanningReason {
@@ -46,7 +76,8 @@ export interface PlanningReason {
 
 export interface PlanChange {
   task_id: string
-  title: string
+  old_start: string | null
+  new_start: string | null
   old_delivery: string | null
   new_delivery: string | null
   shift_days: number
@@ -57,21 +88,41 @@ export interface Proposal {
   id: string
   kind: string
   origin: string
-  status: 'pending' | 'approved' | 'rejected' | 'stale' | 'applied'
+  status: string
   base_plan_version: number
+  intent: Record<string, unknown>
   simulation: {
-    segments: PlanningSegment[]
+    segments: SimulatedSegment[]
+    delivery_dates: Record<string, string>
     changes: PlanChange[]
     warnings: PlanningReason[]
     conflicts: PlanningReason[]
     reasons: PlanningReason[]
   }
+  created_at: string
+  resolved_at: string | null
 }
 
 export interface PlanningView {
   plan_version: number
+  tasks: Task[]
+  segments: PlanningSegment[]
+  days: DayCapacity[]
+}
+
+export interface PlanningContext {
+  today: string
+  plan_version: number
+  projects: Project[]
+  inbox: Task[]
+  queue: Task[]
   segments: PlanningSegment[]
   capacity: DayCapacity[]
-  queue: Task[]
-  delivery_dates: Record<string, string>
+  pending_proposals: Proposal[]
+  constraints: string[]
+}
+
+export interface TaskOrProposal {
+  task: Task | null
+  proposal: Proposal | null
 }

@@ -8,11 +8,26 @@ Anche la traduzione errore di dominio -> status HTTP sta qui e non nei router:
 è una sola mappa, valida per tutte le superfici.
 """
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .api import auth, capacity, history, planning, proposals, share, tasks, tokens
+from . import jobs
+from .api import (
+    auth,
+    capacity,
+    history,
+    integrations,
+    planning,
+    projects,
+    proposals,
+    share,
+    tasks,
+    tokens,
+)
 from .config import settings
 from .services.proposals import (
     HardConflictError,
@@ -22,7 +37,17 @@ from .services.proposals import (
 )
 from .services.tasks import InvalidTransitionError
 
-app = FastAPI(title="Work Planner", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """§32.18: il polling dei feed ICS gira in-process, se abilitato."""
+    scheduler = jobs.start()
+    yield
+    if scheduler is not None:
+        scheduler.shutdown(wait=False)
+
+
+app = FastAPI(title="Work Planner", version="0.1.0", lifespan=lifespan)
 
 #: Il frontend gira su un'origine diversa in sviluppo e deve poter mandare il
 #: cookie di sessione, quindi allow_credentials con origini esplicite (mai "*").
@@ -37,6 +62,7 @@ app.add_middleware(
 for router in (
     auth.router, tasks.router, planning.router, proposals.router,
     capacity.router, history.router, share.router, tokens.router,
+    projects.router, integrations.router,
 ):
     app.include_router(router)
 

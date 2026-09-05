@@ -58,6 +58,7 @@ def client(sessions, monkeypatch):
     from app.security import hash_password
 
     monkeypatch.setattr(settings, "owner_password_hash", hash_password(OWNER_PASSWORD))
+    monkeypatch.setattr(settings, "enable_jobs", False)  # nessuno scheduler nei test
     auth_router._attempts.clear()
 
     def override_session():
