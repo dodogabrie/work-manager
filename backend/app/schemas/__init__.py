@@ -111,28 +111,60 @@ class TaskManagerView(BaseModel):
 
 # ---------------------------------------------------------------- input
 
+#: Limiti dei campi di testo. Una descrizione è il contesto che serve a
+#: riprendere in mano il lavoro fra due settimane, non la documentazione del
+#: task: oltre questa soglia smette di essere leggibile a colpo d'occhio nella
+#: coda, che è il posto da cui la si guarda.
+TITLE_MAX = 200
+DESCRIPTION_MAX = 600
+NOTES_MAX = 1000
+
+
+def _clean(value: str | None) -> str | None:
+    """Spazi ai bordi via, e una stringa di soli spazi vale come assente.
+
+    Normalizzare qui e non nel service tiene lo stesso errore sullo stesso
+    codice: un titolo vuoto è una validazione fallita (422), non un errore di
+    dominio (400).
+    """
+    if value is None:
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
 class QuickAddIn(BaseModel):
     """§6.2: unico campo obbligatorio, il titolo."""
 
-    title: str
+    title: str = Field(min_length=1, max_length=TITLE_MAX)
     project_id: uuid.UUID | None = None
-    description: str | None = None
+    description: str | None = Field(default=None, max_length=DESCRIPTION_MAX)
     planning_effort_minutes: int = Field(default=0, ge=0)
     target_delivery_date: date | None = None
     fixed_delivery_date: date | None = None
-    internal_notes: str | None = None
+    internal_notes: str | None = Field(default=None, max_length=NOTES_MAX)
+
+    @field_validator("title", "description", "internal_notes", mode="before")
+    @classmethod
+    def _strip(cls, value: object) -> object:
+        return _clean(value) if isinstance(value, str) else value
 
 
 class TaskPatchIn(BaseModel):
     """Solo i campi che non toccano il piano. L'effort passa da /effort/change (§15.3)."""
 
-    title: str | None = None
-    description: str | None = None
+    title: str | None = Field(default=None, min_length=1, max_length=TITLE_MAX)
+    description: str | None = Field(default=None, max_length=DESCRIPTION_MAX)
     project_id: uuid.UUID | None = None
     target_delivery_date: date | None = None
     fixed_delivery_date: date | None = None
-    internal_notes: str | None = None
+    internal_notes: str | None = Field(default=None, max_length=NOTES_MAX)
     planning_effort_minutes: int | None = Field(default=None, ge=0)
+
+    @field_validator("title", "description", "internal_notes", mode="before")
+    @classmethod
+    def _strip(cls, value: object) -> object:
+        return _clean(value) if isinstance(value, str) else value
 
 
 class EffortProposalIn(BaseModel):

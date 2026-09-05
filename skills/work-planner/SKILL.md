@@ -74,6 +74,13 @@ wp post /api/inbox/quick-add \
 Il task entra in **Inbox** e **non tocca il piano**. È il modo giusto di
 catturare qualcosa senza decidere subito quando farlo.
 
+**Titolo e descrizione stanno stretti.** Il titolo è una riga che dice cosa si
+fa; la `description` è **sempre breve e concisa** — due o tre righe al massimo,
+quel tanto che serve a riconoscere l'attività fra sei mesi. Niente riassunti del
+contratto, niente elenchi di sottopassi, niente stato dell'arte: il planner
+mostra i task in lista, e una descrizione lunga la legge nessuno. Il dettaglio
+vive nel repository, non qui.
+
 3. Chiedi all'utente se va pianificato ora. Se sì:
 
 ```bash

@@ -356,13 +356,27 @@ export const usePlanningStore = defineStore('planning', () => {
   }
 
   /** §6.2: per aggiungere basta il titolo. Il task nasce in Inbox, fuori dal piano. */
-  async function quickAdd(title: string) {
-    const task = await api.post<Task>('/inbox/quick-add', { title }).catch(fail)
+  async function quickAdd(title: string, description?: string) {
+    const task = await api.post<Task>('/inbox/quick-add', { title, description }).catch(fail)
     inbox.value = [...inbox.value, task]
     return task
   }
 
   /** §32.4.3: `Pianifica` mette il task in fondo alla coda — via proposal (R3). */
+  /** §23.2: è un soft delete — il task sparisce dalla vista, la storia resta. */
+  async function discardFromInbox(taskId: string) {
+    error.value = ''
+    busy.value = true
+    try {
+      await api.del(`/tasks/${taskId}`)
+      inbox.value = inbox.value.filter((t) => t.id !== taskId)
+    } catch (e) {
+      error.value = e instanceof ApiError ? e.message : 'Eliminazione fallita'
+    } finally {
+      busy.value = false
+    }
+  }
+
   async function planFromInbox(taskId: string) {
     busy.value = true
     error.value = ''
@@ -388,6 +402,6 @@ export const usePlanningStore = defineStore('planning', () => {
     calendar, impact, warnings, conflicts, blocked, hasProposal, movedTaskIds,
     nextDelivery, todayCapacity, confirmedDeliveries,
     load, setWeek, goToday, reorder, moveTo, apply, discard, recalculate,
-    quickAdd, planFromInbox,
+    quickAdd, planFromInbox, discardFromInbox,
   }
 })

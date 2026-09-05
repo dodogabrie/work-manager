@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import type { Task } from '../api/types'
 import { hm, longDay } from '../util/time'
@@ -21,6 +21,11 @@ const emit = defineEmits<{
 }>()
 
 const menu = ref(false)
+const open = ref(false)
+
+/* La descrizione si espande su richiesta: nella coda serve leggere il titolo a
+   colpo d'occhio, il contesto solo quando lo si cerca. */
+const hasDetail = computed(() => Boolean(props.task.description?.trim()))
 
 function pick(target: number) {
   menu.value = false
@@ -53,6 +58,18 @@ function pick(target: number) {
       </span>
     </span>
 
+    <button
+      v-if="hasDetail"
+      class="expand"
+      :aria-expanded="open"
+      :aria-controls="`desc-${task.id}`"
+      :title="open ? 'Nascondi la descrizione' : 'Mostra la descrizione'"
+      @click="open = !open"
+    >
+      <span aria-hidden="true">{{ open ? '⌄' : '›' }}</span>
+      <span class="visually-hidden">Descrizione di {{ task.title }}</span>
+    </button>
+
     <span class="menu-wrap">
       <button
         class="menu-btn"
@@ -69,12 +86,34 @@ function pick(target: number) {
         <li><button @click="menu = false; emit('moveAfter')">Sposta dopo…</button></li>
       </ul>
     </span>
+
+    <p v-if="open && hasDetail" :id="`desc-${task.id}`" class="desc">{{ task.description }}</p>
   </li>
 </template>
 
 <style scoped>
+.expand {
+  flex: none; min-height: 32px; min-width: 32px; padding: 0;
+  border: none; background: none; color: var(--text-dim);
+  font-size: 15px; line-height: 1;
+}
+@media (max-width: 560px) {
+  /* Stesso motivo dell'Inbox: il titolo prima di tutto. */
+  .body { flex-basis: 100%; order: -1; }
+}
+
+.desc {
+  flex-basis: 100%;
+  margin: 6px 0 0; padding: 8px 10px;
+  border-radius: var(--radius);
+  background: var(--surface-2); color: var(--text);
+  font-size: 13px; line-height: 1.5;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
 .row {
   display: flex;
+  /* wrap perché la descrizione espansa va a capo occupando tutta la riga. */
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   min-height: var(--tap);

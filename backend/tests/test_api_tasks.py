@@ -23,7 +23,10 @@ def test_quick_add_only_needs_a_title(owner):
 
 
 def test_quick_add_rejects_an_empty_title(owner):
-    assert owner.post("/api/inbox/quick-add", json={"title": "   "}).status_code == 400
+    """422 e non 400: un titolo di soli spazi è una validazione fallita, come un
+    titolo troppo lungo. Prima lo stesso errore dell'utente usciva con due
+    codici diversi a seconda di quale dei due era."""
+    assert owner.post("/api/inbox/quick-add", json={"title": "   "}).status_code == 422
 
 
 def test_inbox_lists_only_unplanned_tasks(owner):

@@ -8,6 +8,11 @@ import { usePlanningStore } from '../stores/planning'
 const store = usePlanningStore()
 const open = ref(false)
 const title = ref('')
+const description = ref('')
+
+/* Deve combaciare con DESCRIPTION_MAX del backend: il contatore serve a non
+   far scrivere un testo che verrebbe poi rifiutato con un 422. */
+const DESCRIPTION_MAX = 600
 const field = ref<HTMLInputElement | null>(null)
 const saving = ref(false)
 
@@ -21,8 +26,9 @@ async function submit() {
   if (!title.value.trim() || saving.value) return
   saving.value = true
   try {
-    await store.quickAdd(title.value.trim())
+    await store.quickAdd(title.value.trim(), description.value.trim() || undefined)
     title.value = ''
+    description.value = ''
     open.value = false
   } catch {
     // store.error è già impostato: il messaggio lo mostra la schermata.
@@ -43,6 +49,20 @@ async function submit() {
       <h2>Nuovo task</h2>
       <label for="qa-title">Titolo</label>
       <input id="qa-title" ref="field" v-model="title" placeholder="Cosa c'è da fare?" />
+
+      <label for="qa-desc">
+        Descrizione <span class="opt">— facoltativa</span>
+      </label>
+      <textarea
+        id="qa-desc"
+        v-model="description"
+        rows="3"
+        :maxlength="DESCRIPTION_MAX"
+        placeholder="Il contesto che ti servirà per riprenderla fra due settimane."
+      ></textarea>
+      <p class="count" :class="{ near: description.length > DESCRIPTION_MAX - 60 }">
+        {{ description.length }} / {{ DESCRIPTION_MAX }}
+      </p>
       <p class="hint">Finisce in Inbox: progetto ed effort si aggiungono dopo.</p>
       <div class="actions">
         <button type="button" @click="open = false">Annulla</button>
@@ -73,6 +93,10 @@ async function submit() {
 }
 h2 { margin: 0; font-size: 16px; }
 label { font-size: 12px; color: var(--text-dim); }
+.opt { font-weight: 400; }
+textarea { resize: vertical; min-height: 68px; font: inherit; }
+.count { margin: -4px 0 0; font-size: 11px; color: var(--text-dim); text-align: right; }
+.count.near { color: var(--warning); }
 .hint { margin: 0; font-size: 12px; color: var(--text-dim); }
 .actions { display: flex; gap: 8px; }
 .actions button { flex: 1; }

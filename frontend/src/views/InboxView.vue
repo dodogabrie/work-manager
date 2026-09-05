@@ -11,6 +11,21 @@ import { hm } from '../util/time'
 const store = usePlanningStore()
 const router = useRouter()
 const working = ref('')
+const open = ref(new Set<string>())
+
+function toggle(id: string) {
+  const next = new Set(open.value)
+  next.has(id) ? next.delete(id) : next.add(id)
+  open.value = next
+}
+
+async function discard(task: { id: string; title: string }) {
+  // Un'eliminazione è irreversibile per chi guarda, anche se sotto è un soft
+  // delete: vale una conferma, e la conferma nomina il task.
+  if (!confirm(`Eliminare «${task.title}» dall'Inbox?`)) return
+  working.value = task.id
+  try { await store.discardFromInbox(task.id) } finally { working.value = '' }
+}
 
 onMounted(() => { if (!store.inbox.length) void store.load() })
 
@@ -56,9 +71,32 @@ async function plan(id: string) {
             <span class="tag">{{ hm(task.planning_effort_minutes) }}</span>
           </span>
         </span>
-        <button class="primary" :disabled="working === task.id || store.busy" @click="plan(task.id)">
-          Pianifica
-        </button>
+        <span class="acts">
+          <button
+            v-if="task.description"
+            class="expand"
+            :aria-expanded="open.has(task.id)"
+            :aria-controls="`inbox-desc-${task.id}`"
+            :title="open.has(task.id) ? 'Nascondi la descrizione' : 'Mostra la descrizione'"
+            @click="toggle(task.id)"
+          >
+            <span aria-hidden="true">{{ open.has(task.id) ? '⌄' : '›' }}</span>
+            <span class="visually-hidden">Descrizione di {{ task.title }}</span>
+          </button>
+          <button
+            class="drop"
+            :disabled="working === task.id || store.busy"
+            :aria-label="`Elimina ${task.title}`"
+            @click="discard(task)"
+          >Elimina</button>
+          <button class="primary" :disabled="working === task.id || store.busy" @click="plan(task.id)">
+            Pianifica
+          </button>
+        </span>
+
+        <p v-if="open.has(task.id) && task.description" :id="`inbox-desc-${task.id}`" class="desc">
+          {{ task.description }}
+        </p>
       </li>
     </ul>
 
@@ -75,7 +113,7 @@ h1 { font-size: 20px; margin: 0 0 8px; }
 .empty { color: var(--text-dim); }
 .rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .row {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
   padding: 8px 10px; min-height: var(--tap);
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
 }
@@ -83,4 +121,25 @@ h1 { font-size: 20px; margin: 0 0 8px; }
 .title { overflow-wrap: anywhere; }
 .meta { display: flex; flex-wrap: wrap; gap: 4px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.acts { display: flex; align-items: center; gap: 6px; }
+
+/* Su schermo stretto i bottoni scendono su una riga propria: altrimenti
+   comprimono il titolo a metà larghezza e una richiesta lunga diventa una
+   colonna di due parole. */
+@media (max-width: 560px) {
+  .acts { flex-basis: 100%; justify-content: flex-end; }
+  .body { flex-basis: 100%; }
+}
+.expand {
+  min-height: 32px; min-width: 32px; padding: 0;
+  border: none; background: none; color: var(--text-dim); font-size: 15px; line-height: 1;
+}
+.drop { color: var(--danger); border-color: var(--border); }
+.desc {
+  flex-basis: 100%;
+  margin: 4px 0 0; padding: 8px 10px;
+  border-radius: var(--radius); background: var(--surface-2);
+  font-size: 13px; line-height: 1.5;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
 </style>
