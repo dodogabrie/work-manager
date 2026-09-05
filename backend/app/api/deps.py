@@ -24,10 +24,18 @@ from ..services.planning import TZ
 
 SESSION_COOKIE = "wp_session"
 
-#: §28: cookie di sessione non leggibile da JS, non inviato cross-site, e
-#: marcato secure appena l'app è pubblicata in https.
-COOKIE_SECURE = settings.public_base_url.startswith("https://")
 COOKIE_MAX_AGE = 60 * 60 * 24 * 30
+
+
+def cookie_secure() -> bool:
+    """§28: il cookie è marcato Secure appena l'app è pubblicata in https.
+
+    Valutato a ogni chiamata e non una volta all'import: una costante di modulo
+    congelerebbe il valore letto dal `.env` presente al momento dell'import,
+    rendendo il comportamento dipendente da dove e come è stato avviato il
+    processo — e i test dipendenti dall'ambiente della macchina.
+    """
+    return settings.public_base_url.startswith("https://")
 
 DbSession = Annotated[Session, Depends(get_session)]
 
@@ -35,13 +43,13 @@ DbSession = Annotated[Session, Depends(get_session)]
 def set_session_cookie(response: Response, value: str) -> None:
     response.set_cookie(
         SESSION_COOKIE, value, httponly=True, samesite="lax",
-        secure=COOKIE_SECURE, max_age=COOKIE_MAX_AGE, path="/",
+        secure=cookie_secure(), max_age=COOKIE_MAX_AGE, path="/",
     )
 
 
 def clear_session_cookie(response: Response) -> None:
     response.delete_cookie(SESSION_COOKIE, path="/", httponly=True,
-                           samesite="lax", secure=COOKIE_SECURE)
+                           samesite="lax", secure=cookie_secure())
 
 
 def today() -> date:

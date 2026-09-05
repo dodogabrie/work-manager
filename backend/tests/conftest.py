@@ -59,6 +59,11 @@ def client(sessions, monkeypatch):
 
     monkeypatch.setattr(settings, "owner_password_hash", hash_password(OWNER_PASSWORD))
     monkeypatch.setattr(settings, "enable_jobs", False)  # nessuno scheduler nei test
+    # La suite non deve dipendere dal .env della macchina: con un
+    # PUBLIC_BASE_URL in https il cookie diventa Secure e il TestClient, che
+    # parla in http, non lo rimanda più indietro.
+    monkeypatch.setattr(settings, "public_base_url", "http://testserver")
+    monkeypatch.setattr(settings, "owner_password_hash_file", "")
     auth_router._attempts.clear()
 
     def override_session():
