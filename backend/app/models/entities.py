@@ -13,7 +13,16 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    JSON, Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text,
+    JSON,
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -21,7 +30,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, SoftDeleteMixin, TimestampMixin
 from .enums import (
-    CalendarEventStatus, ExceptionKind, ProposalKind, ProposalOrigin, ProposalStatus, TaskStatus,
+    CalendarEventStatus,
+    ExceptionKind,
+    ProposalKind,
+    ProposalOrigin,
+    ProposalStatus,
+    TaskStatus,
 )
 
 #: JSONB su Postgres, JSON altrove: i test girano su SQLite in memoria senza Docker.

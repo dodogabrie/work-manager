@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from sqlalchemy import create_engine
@@ -31,3 +31,49 @@ def sessions(engine):
 def session(sessions):
     with sessions() as session:
         yield session
+
+
+# ---------------------------------------------------------------- API (fase 4)
+
+def _next_monday() -> date:
+    """Lunedì futuro: orizzonte deterministico ma dentro la finestra della
+    Manager View e del feed ICS, che sono ancorati a oggi reale."""
+    today = date.today()
+    return today + timedelta(days=(7 - today.weekday()) % 7 or 7)
+
+
+API_MON = _next_monday()
+OWNER_PASSWORD = "correct horse battery staple"
+
+
+@pytest.fixture
+def client(sessions, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from app.api import auth as auth_router
+    from app.api.deps import today
+    from app.config import settings
+    from app.db import get_session
+    from app.main import app
+    from app.security import hash_password
+
+    monkeypatch.setattr(settings, "owner_password_hash", hash_password(OWNER_PASSWORD))
+    auth_router._attempts.clear()
+
+    def override_session():
+        with sessions() as session:
+            yield session
+
+    app.dependency_overrides[get_session] = override_session
+    app.dependency_overrides[today] = lambda: API_MON
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def owner(client):
+    """Client già autenticato come owner."""
+    response = client.post("/api/auth/login", json={"password": OWNER_PASSWORD})
+    assert response.status_code == 200
+    return client
