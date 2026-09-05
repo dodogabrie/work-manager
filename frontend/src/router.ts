@@ -8,6 +8,7 @@ export const router = createRouter({
   routes: [
     { path: '/', redirect: '/planning' },
     { path: '/planning', name: 'planning', component: () => import('./views/PlanningView.vue') },
+    { path: '/timeline', name: 'timeline', component: () => import('./views/TimelineView.vue') },
     { path: '/inbox', name: 'inbox', component: () => import('./views/InboxView.vue') },
     { path: '/projects', name: 'projects', component: () => import('./views/ProjectsView.vue') },
     { path: '/history', name: 'history', component: () => import('./views/HistoryView.vue') },

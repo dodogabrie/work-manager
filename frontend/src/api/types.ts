@@ -128,3 +128,87 @@ export interface TaskOrProposal {
   task: Task | null
   proposal: Proposal | null
 }
+
+// ---------------------------------------------------------------- history (§22, §23)
+
+/** §23.1. `entities` è un JSON libero: la history non ne conosce la forma. */
+export interface Action {
+  id: string
+  action_type: string
+  origin: string
+  actor: string | null
+  created_at: string
+  entities: Record<string, unknown>
+  reversible: boolean
+  undone: boolean
+  inverse_of_id: string | null
+  snapshot_id: string | null
+}
+
+export interface Snapshot {
+  id: string
+  plan_version: number
+  created_at: string
+  note: string | null
+}
+
+/** §23.4: i quattro esiti possibili di un undo/redo, come valori non eccezioni. */
+export interface UndoResult {
+  status: 'applied' | 'proposal' | 'conflict' | 'impossible'
+  message: string
+  action: Action | null
+  proposal: Proposal | null
+}
+
+// ---------------------------------------------------------------- impostazioni
+
+export interface ExceptionOrProposal {
+  exception: CapacityException | null
+  proposal: Proposal | null
+}
+
+export interface CalendarConnection {
+  id: string
+  name: string
+  ics_url: string
+  enabled: boolean
+  last_synced_at: string | null
+  last_sync_error: string | null
+  created_at: string
+}
+
+export interface SyncResult {
+  connection: CalendarConnection
+  events_upserted: number
+  events_cancelled: number
+  proposal: Proposal | null
+}
+
+export interface ApiToken {
+  id: string
+  label: string
+  scopes: string[]
+  revoked_at: string | null
+  last_used_at: string | null
+  created_at: string
+}
+
+/** §28: `token` esiste solo nella risposta di creazione, mai più. */
+export interface ApiTokenCreated extends ApiToken {
+  token: string
+}
+
+export interface ShareLink {
+  id: string
+  label: string
+  kind: string
+  expires_at: string | null
+  revoked_at: string | null
+  last_accessed_at: string | null
+  created_at: string
+}
+
+export interface ShareLinkCreated extends ShareLink {
+  token: string
+  url: string
+}

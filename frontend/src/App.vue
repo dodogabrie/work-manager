@@ -9,6 +9,7 @@ const chrome = computed(() => !['share', 'login'].includes(String(route.name)))
 
 const items = [
   { to: '/planning', label: 'Planning', icon: '▤' },
+  { to: '/timeline', label: 'Timeline', icon: '⟼' },
   { to: '/inbox', label: 'Inbox', icon: '⊕' },
   { to: '/projects', label: 'Progetti', icon: '◈' },
   { to: '/history', label: 'History', icon: '↺' },
