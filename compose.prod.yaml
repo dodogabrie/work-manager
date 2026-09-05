@@ -1,0 +1,33 @@
+# Deploy su sottodominio. Si usa insieme al compose di base:
+#   docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+#
+# Il reverse proxy e TLS stanno fuori da qui (Caddy o nginx sull'host):
+# questo file espone solo la porta HTTP del frontend, che fa già da proxy
+# verso il backend. Vedi DEPLOY.md.
+services:
+  db:
+    ports: []                       # il database non si affaccia su Internet
+    restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backups:/backups
+
+  backend:
+    restart: unless-stopped
+    volumes: []                     # niente bind-mount del sorgente in produzione
+    environment:
+      ENABLE_JOBS: "true"
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports: []                       # raggiungibile solo dal frontend
+
+  frontend:
+    build:
+      context: ./frontend
+      target: prod
+    restart: unless-stopped
+    volumes: []
+    command: []
+    ports:
+      - "127.0.0.1:${HTTP_PORT:-8080}:80"
