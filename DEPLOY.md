@@ -10,10 +10,19 @@ l'unica porta da esporre è quella del frontend.
 cp .env.example .env
 ```
 
-Genera i segreti e mettili in `.env`:
+La password owner **non sta in `.env`**: un hash argon2 è pieno di `$`
+(`$argon2id$v=19$m=...`) e Docker Compose li interpola come variabili,
+consegnando al container un hash mutilato e un login che fallisce senza dire
+perché. Vive quindi in `secrets/owner_password_hash`, scritto dal comando:
 
 ```bash
-docker compose run --rm backend python -m app.cli hash-password   # -> OWNER_PASSWORD_HASH
+mkdir -p secrets
+docker compose run --rm backend python -m app.cli hash-password
+```
+
+Il segreto di sessione invece va in `.env` (non contiene `$`):
+
+```bash
 docker compose run --rm backend python -m app.cli secret          # -> SESSION_SECRET
 ```
 
@@ -108,7 +117,9 @@ Il backend espone `/health`; entrambi i container hanno un healthcheck, quindi
 ## Note di sicurezza
 
 - Il database non espone porte in produzione (`ports: []`).
-- `.env` non è nel repository e non deve finirci.
+- `.env` e `secrets/` non sono nel repository e non devono finirci.
+- `secrets/owner_password_hash` è montato in sola lettura in produzione e ha
+  permessi `600`.
 - I token API, i link manager e i feed ICS sono salvati **hashati**: se ne
   perdi uno va revocato e ricreato, non recuperato.
 - Il rate limit sul login è in memoria e per processo: con più worker uvicorn

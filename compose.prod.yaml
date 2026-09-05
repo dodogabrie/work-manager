@@ -14,7 +14,8 @@ services:
 
   backend:
     restart: unless-stopped
-    volumes: []                     # niente bind-mount del sorgente in produzione
+    volumes:
+      - ./secrets:/secrets:ro       # solo i segreti, non il sorgente
     environment:
       ENABLE_JOBS: "true"
     command: >

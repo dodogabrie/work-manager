@@ -36,9 +36,8 @@ def _check_rate(client: str) -> None:
 @router.post("/login", response_model=SessionView)
 def login(payload: LoginIn, request: Request, response: Response) -> SessionView:
     _check_rate(request.client.host if request.client else "unknown")
-    if not settings.owner_password_hash or not verify_password(
-        payload.password, settings.owner_password_hash
-    ):
+    stored = settings.resolved_owner_password_hash
+    if not stored or not verify_password(payload.password, stored):
         raise HTTPException(401, "invalid credentials")
     set_session_cookie(response, issue_session("owner"))
     return SessionView(subject="owner")

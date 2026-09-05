@@ -17,17 +17,20 @@ services:
 
   backend:
     build: ./backend
+    # env_file e non `environment:`: Compose interpola le $ nei valori, e un
+    # hash argon2 ne è pieno ($argon2id$v=19$m=...). Interpolandolo, la
+    # password owner arriverebbe nel container corrotta e il login fallirebbe
+    # senza dire perché.
+    env_file: .env
     environment:
+      OWNER_PASSWORD_HASH_FILE: /secrets/owner_password_hash
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-workplanner}:${POSTGRES_PASSWORD:-workplanner}@db:5432/${POSTGRES_DB:-workplanner}
-      OWNER_PASSWORD_HASH: ${OWNER_PASSWORD_HASH:-}
-      SESSION_SECRET: ${SESSION_SECRET:-dev-insecure-change-me}
-      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8000}
-      TZ: ${TZ:-Europe/Rome}
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      - ./secrets:/secrets
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
