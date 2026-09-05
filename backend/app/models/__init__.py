@@ -1,12 +1,30 @@
 from .base import Base
 from .entities import (
-    Action, ApiToken, CapacityException, ExternalCalendarConnection, ExternalCalendarEvent,
-    ManagerShareLink, PlanningProposal, PlanningSegment, PlanningSnapshot, PlanState, Project,
-    Report, Task, User, WeeklyCapacity,
+    Action,
+    ApiToken,
+    CapacityException,
+    ExternalCalendarConnection,
+    ExternalCalendarEvent,
+    ManagerShareLink,
+    PlanningProposal,
+    PlanningSegment,
+    PlanningSnapshot,
+    PlanState,
+    Project,
+    Report,
+    Task,
+    User,
+    WeeklyCapacity,
 )
 from .enums import (
-    ALLOWED_TRANSITIONS, TRANSITIONS_REQUIRING_PROPOSAL, CalendarEventStatus, ExceptionKind,
-    ProposalKind, ProposalOrigin, ProposalStatus, TaskStatus,
+    ALLOWED_TRANSITIONS,
+    TRANSITIONS_REQUIRING_PROPOSAL,
+    CalendarEventStatus,
+    ExceptionKind,
+    ProposalKind,
+    ProposalOrigin,
+    ProposalStatus,
+    TaskStatus,
 )
 
 __all__ = [

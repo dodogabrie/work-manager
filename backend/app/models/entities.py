@@ -13,7 +13,8 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint,
+    JSON, Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -22,6 +23,9 @@ from .base import Base, SoftDeleteMixin, TimestampMixin
 from .enums import (
     CalendarEventStatus, ExceptionKind, ProposalKind, ProposalOrigin, ProposalStatus, TaskStatus,
 )
+
+#: JSONB su Postgres, JSON altrove: i test girano su SQLite in memoria senza Docker.
+JsonDoc = JSON().with_variant(JSONB, "postgresql")
 
 
 class User(Base, TimestampMixin):
@@ -186,7 +190,7 @@ class PlanningSnapshot(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     plan_version: Mapped[int] = mapped_column(Integer, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    payload: Mapped[dict] = mapped_column(JSONB)
+    payload: Mapped[dict] = mapped_column(JsonDoc)
     note: Mapped[str | None] = mapped_column(Text, default=None)
 
     __table_args__ = (Index("ix_snapshots_version", "plan_version"),)
@@ -205,8 +209,8 @@ class PlanningProposal(Base, TimestampMixin):
     #: §12.1: se il piano cambia nel frattempo la proposal diventa STALE.
     base_plan_version: Mapped[int] = mapped_column(Integer)
 
-    intent: Mapped[dict] = mapped_column(JSONB)        # il cambiamento richiesto
-    simulation: Mapped[dict] = mapped_column(JSONB)    # changes/warnings/conflicts/reasons (§44)
+    intent: Mapped[dict] = mapped_column(JsonDoc)        # il cambiamento richiesto
+    simulation: Mapped[dict] = mapped_column(JsonDoc)    # changes/warnings/conflicts/reasons (§44)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
     __table_args__ = (Index("ix_proposals_status", "status"),)
@@ -221,9 +225,9 @@ class Action(Base):
     origin: Mapped[ProposalOrigin] = mapped_column(String(20))
     actor: Mapped[str | None] = mapped_column(String(200), default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    entities: Mapped[dict] = mapped_column(JSONB, default=dict)
-    before: Mapped[dict | None] = mapped_column(JSONB, default=None)
-    after: Mapped[dict | None] = mapped_column(JSONB, default=None)
+    entities: Mapped[dict] = mapped_column(JsonDoc, default=dict)
+    before: Mapped[dict | None] = mapped_column(JsonDoc, default=None)
+    after: Mapped[dict | None] = mapped_column(JsonDoc, default=None)
     snapshot_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("planning_snapshots.id"), default=None
     )
@@ -256,7 +260,7 @@ class ApiToken(Base, TimestampMixin):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     label: Mapped[str] = mapped_column(String(200))
     token_hash: Mapped[str] = mapped_column(String(128), unique=True)
-    scopes: Mapped[list] = mapped_column(JSONB, default=list)
+    scopes: Mapped[list] = mapped_column(JsonDoc, default=list)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
@@ -270,4 +274,4 @@ class Report(Base):
     fmt: Mapped[str] = mapped_column(String(10))   # pdf | png
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     path: Mapped[str] = mapped_column(Text)
-    params: Mapped[dict] = mapped_column(JSONB, default=dict)
+    params: Mapped[dict] = mapped_column(JsonDoc, default=dict)
