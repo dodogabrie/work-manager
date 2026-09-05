@@ -21,7 +21,9 @@ WEEK = (date(2026, 9, 7), date(2026, 9, 14))
 
 
 def test_simple_meeting():
-    ics = _cal(_ev(UID="a", DTSTART="20260907T090000Z", DTEND="20260907T110000Z", SUMMARY="Standup"))
+    ics = _cal(
+        _ev(UID="a", DTSTART="20260907T090000Z", DTEND="20260907T110000Z", SUMMARY="Standup")
+    )
     (event,) = parse_ics(ics, *WEEK)
     assert event.uid == "a"
     assert (event.ends_at - event.starts_at).total_seconds() == 7200
@@ -61,13 +63,19 @@ def test_unanswered_invite_still_occupies_capacity():
 
 
 def test_transparent_event_does_not_occupy_capacity():
-    ics = _cal(_ev(UID="e", DTSTART="20260907T090000Z", DTEND="20260907T100000Z", TRANSP="TRANSPARENT"))
+    ics = _cal(
+        _ev(UID="e", DTSTART="20260907T090000Z", DTEND="20260907T100000Z",
+            TRANSP="TRANSPARENT")
+    )
     (event,) = parse_ics(ics, *WEEK)
     assert not event.occupies_capacity
 
 
 def test_cancelled_event_does_not_occupy_capacity():
-    ics = _cal(_ev(UID="f", DTSTART="20260907T090000Z", DTEND="20260907T100000Z", STATUS="CANCELLED"))
+    ics = _cal(
+        _ev(UID="f", DTSTART="20260907T090000Z", DTEND="20260907T100000Z",
+            STATUS="CANCELLED")
+    )
     (event,) = parse_ics(ics, *WEEK)
     assert event.cancelled
     assert not event.occupies_capacity
@@ -75,7 +83,8 @@ def test_cancelled_event_does_not_occupy_capacity():
 
 def test_recurring_meeting_is_expanded():
     ics = _cal(
-        _ev(UID="g", DTSTART="20260907T090000Z", DTEND="20260907T093000Z", RRULE="FREQ=DAILY;COUNT=5")
+        _ev(UID="g", DTSTART="20260907T090000Z", DTEND="20260907T093000Z",
+            RRULE="FREQ=DAILY;COUNT=5")
     )
     assert len(parse_ics(ics, *WEEK)) == 5
 
@@ -92,7 +101,10 @@ def test_zero_length_event_is_dropped():
 
 
 def test_all_day_event_is_flagged():
-    ics = _cal("BEGIN:VEVENT\nUID:j\nDTSTART;VALUE=DATE:20260908\nDTEND;VALUE=DATE:20260909\nEND:VEVENT")
+    ics = _cal(
+        "BEGIN:VEVENT\nUID:j\nDTSTART;VALUE=DATE:20260908\n"
+        "DTEND;VALUE=DATE:20260909\nEND:VEVENT"
+    )
     (event,) = parse_ics(ics, *WEEK)
     assert event.all_day
 

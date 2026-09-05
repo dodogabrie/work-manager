@@ -16,6 +16,19 @@ curl -sH "Authorization: Bearer $TOKEN" \
 Il token **non va messo in un file del repository** né in un `.env` versionato:
 è un segreto personale e vale per tutti i progetti.
 
+## C'è una skill che fa già tutto questo
+
+Se usi Claude Code, invece di seguire questo documento a mano puoi installare
+la skill `work-planner`, che incapsula la procedura e un wrapper su `curl`:
+
+```bash
+git clone git@github.com:dodogabrie/claude-skills.git ~/.claude/skills
+```
+
+Vale per ogni repository, non solo per quello in cui l'hai installata. Il
+resto di questo documento resta la specifica dell'API, utile a chi la chiama
+da altro.
+
 ## Le cinque regole da conoscere prima di scrivere
 
 Work Planner non è un task manager qualunque. Se le ignori, le chiamate
