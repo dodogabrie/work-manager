@@ -37,7 +37,9 @@ h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; margin: 
 .nav button { min-width: var(--tap); padding: 0 12px; }
 .grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  /* 96px: sette giorni entrano in un desktop normale senza scroll orizzontale,
+     e sotto quella soglia il contenitore scrolla per conto suo. */
+  grid-template-columns: repeat(7, minmax(96px, 1fr));
   gap: 8px;
   padding: 0 12px 12px;
   overflow-x: auto;

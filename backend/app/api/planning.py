@@ -81,6 +81,7 @@ def get_planning(
         tasks=[view.model_validate(t) for t in tasks],
         segments=[PlanningSegmentView.model_validate(s) for s in segments],
         days=_days(session, segments, start, end),
+        delivery_dates=service.current_plan(session).delivery_dates,
     )
 
 

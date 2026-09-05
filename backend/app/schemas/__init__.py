@@ -313,6 +313,10 @@ class PlanningView(BaseModel):
     tasks: list[TaskInternalView | TaskClaudeView]
     segments: list[PlanningSegmentView]
     days: list[DayCapacityView]
+    #: Ultimo giorno occupato da ciascun task, calcolato sull'intero piano e non
+    #: sulla sola finestra richiesta: la "prossima consegna" cade quasi sempre
+    #: fuori dalla settimana che si sta guardando.
+    delivery_dates: dict[str, date]
 
 
 class PlanningContextView(BaseModel):

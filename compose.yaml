@@ -35,7 +35,8 @@ services:
   frontend:
     build: ./frontend
     environment:
-      VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8000}
+      BACKEND_ORIGIN: http://backend:8000
+      VITE_API_BASE: ${VITE_API_BASE:-}
     volumes:
       - ./frontend:/app
       - /app/node_modules

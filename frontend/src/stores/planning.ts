@@ -23,7 +23,7 @@ import type {
   Task,
   TaskOrProposal,
 } from '../api/types'
-import { addDays, iso, weekStart } from '../util/time'
+import { addDays, iso, longDay, weekStart } from '../util/time'
 
 /** Un blocco di lavoro su un giorno, pronto per il calendario. */
 export interface DayBlock {
@@ -60,6 +60,8 @@ export const usePlanningStore = defineStore('planning', () => {
   const queue = ref<Task[]>([])                      // ordine mostrato (può essere l'intenzione)
   const serverQueue = ref<Task[]>([])                // ordine confermato dal backend
   const segments = ref<PlanningSegment[]>([])
+  /** task_id -> ultimo giorno occupato, su tutto il piano (non solo la finestra). */
+  const planDeliveries = ref<Record<string, string>>({})
   const days = ref<DayCapacity[]>([])
   const weekly = ref<Record<string, number>>({})
   const exceptions = ref<CapacityException[]>([])
@@ -107,7 +109,12 @@ export const usePlanningStore = defineStore('planning', () => {
     return out
   }
 
-  const confirmedDeliveries = computed(() => deliveries(segments.value))
+  /** Le consegne del piano intero, non della sola settimana caricata: la
+   *  prossima consegna cade quasi sempre fuori dalla finestra che si guarda. */
+  const confirmedDeliveries = computed(() => {
+    const fromPlan = new Map(Object.entries(planDeliveries.value))
+    return fromPlan.size ? fromPlan : deliveries(segments.value)
+  })
 
   const nextDelivery = computed(() => {
     let best: { title: string; day: string } | null = null
@@ -180,9 +187,9 @@ export const usePlanningStore = defineStore('planning', () => {
     const moved = changes.filter((c) => c.old_delivery !== c.new_delivery || c.shift_days !== 0)
     const parts: string[] = [`${changes.length} task spostat${changes.length === 1 ? 'o' : 'i'}`]
     const slip = moved.find((c) => c.shift_days !== 0 && c.new_delivery)
-    if (slip) {
+    if (slip?.new_delivery) {
       const task = taskById.value.get(slip.task_id)
-      parts.push(`${task?.title ?? 'Un task'} → ${slip.new_delivery}`)
+      parts.push(`${task?.title ?? 'Un task'} → ${longDay(slip.new_delivery)}`)
     }
     return parts.join(' · ')
   })
@@ -203,6 +210,7 @@ export const usePlanningStore = defineStore('planning', () => {
     serverQueue.value = plan.tasks
     if (!proposal.value) queue.value = [...plan.tasks]
     segments.value = plan.segments
+    planDeliveries.value = plan.delivery_dates ?? {}
     days.value = plan.days
     weekly.value = capacity.weekly_minutes
     exceptions.value = capacity.exceptions

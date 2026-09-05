@@ -108,6 +108,8 @@ export interface PlanningView {
   tasks: Task[]
   segments: PlanningSegment[]
   days: DayCapacity[]
+  /** task_id -> ultimo giorno occupato, calcolato sull'intero piano. */
+  delivery_dates: Record<string, string>
 }
 
 export interface PlanningContext {
