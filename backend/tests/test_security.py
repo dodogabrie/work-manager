@@ -1,8 +1,13 @@
 """Percorso di autenticazione: se si rompe silenziosamente, l'app resta aperta."""
 
 from app.security import (
-    generate_token, hash_password, hash_token, issue_session, read_session,
-    tokens_match, verify_password,
+    generate_token,
+    hash_password,
+    hash_token,
+    issue_session,
+    read_session,
+    tokens_match,
+    verify_password,
 )
 
 

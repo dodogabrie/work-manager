@@ -34,12 +34,8 @@ def schedule(
         PlanningSegment(s.task_id, s.date, s.minutes, locked=True) for s in locked_segments
     ]
     used: dict[date, int] = {}
-    delivery_dates: dict[str, date] = {}
     for seg in segments:
         used[seg.date] = used.get(seg.date, 0) + seg.minutes
-        known = delivery_dates.get(seg.task_id)
-        if known is None or seg.date > known:
-            delivery_dates[seg.task_id] = seg.date
 
     # §32.2.8 tie-breaking: total order, therefore deterministic.
     ordered = sorted(queue, key=lambda i: (i.queue_position, i.created_at, i.task_id))
@@ -61,11 +57,19 @@ def schedule(
                 taken = min(free, remaining)
                 segments.append(PlanningSegment(item.task_id, day, taken))
                 used[day] = used.get(day, 0) + taken
-                delivery_dates[item.task_id] = day
                 remaining -= taken
                 if remaining == 0:
                     break
             day = next(days)
+
+    # Derived from the segments rather than tracked during placement: a task may
+    # own a locked segment later than the work just poured in, and delivery is
+    # the last day it occupies, not the last one written.
+    delivery_dates: dict[str, date] = {}
+    for seg in segments:
+        known = delivery_dates.get(seg.task_id)
+        if known is None or seg.date > known:
+            delivery_dates[seg.task_id] = seg.date
 
     reasons: list[PlanningReason] = []
     for item in ordered:

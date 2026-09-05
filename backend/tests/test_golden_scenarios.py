@@ -9,13 +9,13 @@ from app.domain.models import ReasonType
 from app.domain.scheduler import schedule
 from tests.helpers import (
     FRI,
-    H,
     MON,
     NEXT_MON,
     SAT,
     THU,
     TUE,
     WED,
+    H,
     by_day,
     calendar,
     item,

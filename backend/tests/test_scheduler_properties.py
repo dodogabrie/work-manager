@@ -9,7 +9,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from app.domain.capacity import CapacityCalendar
-from app.domain.models import QueueItem
+from app.domain.models import QueueItem, ReasonType
 from app.domain.scheduler import schedule
 
 START = date(2026, 1, 5)
@@ -51,7 +51,7 @@ def queues(draw: st.DrawFn) -> list[QueueItem]:
 @given(queues(), calendars)
 def test_no_minute_is_lost_or_invented(queue: list[QueueItem], cal: CapacityCalendar) -> None:
     result = schedule(queue, cal, START)
-    unschedulable = {c.task_id for c in result.conflicts}
+    unschedulable = {c.task_id for c in result.conflicts if c.type is ReasonType.UNSCHEDULABLE}
     placed: dict[str, int] = {}
     for seg in result.segments:
         placed[seg.task_id] = placed.get(seg.task_id, 0) + seg.minutes
@@ -80,8 +80,8 @@ def test_first_segments_follow_the_queue_order(
     """R1/R2: the scheduler never lets a later task start before an earlier one."""
     result = schedule(queue, cal, START)
     starts: dict[str, date] = {}
-    for seg in result.segments:
-        starts.setdefault(seg.task_id, min(starts.get(seg.task_id, seg.date), seg.date))
+    for seg in result.segments:  # segments are sorted by day
+        starts.setdefault(seg.task_id, seg.date)
     previous: date | None = None
     for task in queue:
         start = starts.get(task.task_id)

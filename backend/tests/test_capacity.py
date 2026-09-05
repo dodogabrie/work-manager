@@ -5,7 +5,12 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from app.domain.capacity import CalendarEvent, CapacityCalendar, busy_minutes_by_day, merge_intervals
+from app.domain.capacity import (
+    CalendarEvent,
+    CapacityCalendar,
+    busy_minutes_by_day,
+    merge_intervals,
+)
 
 ROME = ZoneInfo("Europe/Rome")
 DAY = date(2026, 1, 5)

@@ -9,10 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     INBOX = "INBOX"
     PLANNED = "PLANNED"
     IN_PROGRESS = "IN_PROGRESS"
@@ -22,7 +22,7 @@ class TaskStatus(str, Enum):
     CANCELLED = "CANCELLED"
 
 
-class ReasonType(str, Enum):
+class ReasonType(StrEnum):
     CAPACITY_REDUCED = "CAPACITY_REDUCED"
     TARGET_MISSED = "TARGET_MISSED"
     FIXED_DATE_CONFLICT = "FIXED_DATE_CONFLICT"
