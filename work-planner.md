@@ -499,11 +499,16 @@ Materializzazione temporale:
 LUNEDÌ      T1 5h + T2 3h
 MARTEDÌ     T2 8h
 MERCOLEDÌ   T2 1h + T3 7h
-GIOVEDÌ     T3 1h + T4 4h + T5 3h
-VENERDÌ     T4 2h
+GIOVEDÌ     T3 1h + T4 6h + T5 1h
+VENERDÌ     T5 2h
 ```
 
 L'ordine è già stato deciso dall'utente; lo scheduler lo trasforma in segmenti.
+
+T5 ha una fixed date a giovedì ma il riempimento in avanti lo colloca a venerdì:
+lo scheduler **non lo anticipa** (§32.2.8, R1/R2/R8) e alza invece un
+`FIXED_DATE_CONFLICT` con `missing capacity: 2h`, che blocca l'approvazione.
+Sta all'utente riordinare la coda, come prescrive §36.
 
 ## 34. Evento: nuova riunione
 
