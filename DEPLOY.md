@@ -68,8 +68,10 @@ sudo cloudflared tunnel route dns <TUNNEL_ID> work-planner.edoardogabrielli.com
 sudo systemctl restart cloudflared
 ```
 
-Il deploy attuale usa la porta **8091** e il tunnel
-`54f148bf-8dfe-4fd0-ba03-ebea6133331a`.
+Il deploy attuale usa la porta **8091**. L'ID del tunnel si legge con
+`cloudflared tunnel list` oppure in cima a `/etc/cloudflared/config.yml`: non è
+scritto qui perché è lo stesso tunnel di tutti gli altri servizi della
+macchina, e questo repository è pubblico.
 
 ## 4. Verifica
 
