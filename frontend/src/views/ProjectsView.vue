@@ -3,11 +3,29 @@ import { onMounted, reactive, ref } from 'vue'
 
 import { useProjectsStore } from '../stores/projects'
 import { hm } from '../util/time'
+import { agentPrompt } from '../util/agentPrompt'
 
 /* §32.4.6: un progetto è un nome e un colore. Niente di più, perché niente di
    più entra nello scheduler. Per ognuno mostriamo quanto lavoro ci sta sopra:
    è l'unica domanda che si fa davvero da questa schermata. */
 const store = useProjectsStore()
+
+/* Il prompt non si mostra: il bottone lo mette negli appunti e basta.
+   La base URL è quella da cui la pagina è servita, così il prompt copiato da
+   casa e quello copiato dal dominio pubblico puntano al posto giusto. */
+const apiBase = import.meta.env.VITE_API_BASE || window.location.origin
+const hooked = ref('')
+
+async function copyPrompt(project: { id: string; name: string }) {
+  try {
+    await navigator.clipboard.writeText(agentPrompt(project, apiBase))
+    hooked.value = project.id
+    setTimeout(() => { if (hooked.value === project.id) hooked.value = '' }, 4000)
+  } catch {
+    // Clipboard negata (contesto non sicuro, permessi): dirlo, non fingere.
+    store.error = 'Copia non riuscita: il browser non ha concesso gli appunti.'
+  }
+}
 
 const draft = reactive({ name: '', color: '#6b7280' })
 const editing = ref<string | null>(null)
@@ -45,6 +63,11 @@ onMounted(() => store.load())
     </header>
 
     <p v-if="store.error" class="banner" role="alert">{{ store.error }}</p>
+    <p v-if="hooked" class="hint" role="status">
+      Prompt negli appunti. Incollalo in una chat aperta sul repository di quel
+      progetto: da lì in poi l'agente registra il lavoro e propone la
+      pianificazione prima di progettare.
+    </p>
 
     <form class="card new" @submit.prevent="add()">
       <label class="field">
@@ -92,6 +115,14 @@ onMounted(() => store.load())
             </span>
           </div>
           <div class="acts">
+            <button
+              class="hook"
+              :disabled="p.archived"
+              :title="`Copia il prompt che aggancia un agente a ${p.name}`"
+              @click="copyPrompt(p)"
+            >
+              {{ hooked === p.id ? '✓ Copiato' : 'Aggancia agente' }}
+            </button>
             <button @click="startEdit(p.id, p.name, p.color)">Modifica</button>
             <button :disabled="store.busy" @click="store.update(p.id, { archived: !p.archived })">
               {{ p.archived ? 'Ripristina' : 'Archivia' }}
@@ -104,6 +135,13 @@ onMounted(() => store.load())
 </template>
 
 <style scoped>
+.hook { border-color: var(--accent); color: var(--accent); }
+.hint {
+  margin: 0 0 4px; padding: 8px 10px;
+  border-radius: var(--radius);
+  background: var(--accent-soft); color: var(--text);
+  font-size: 13px;
+}
 .projects { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
 h1 { margin: 0; font-size: 20px; }
 .sub { margin: 2px 0 0; color: var(--text-dim); font-size: 13px; }
