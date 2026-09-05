@@ -1,0 +1,102 @@
+{# §21: prima, nuova richiesta, dopo, effetti. #}
+{% extends "base.html" %}
+
+{% block subtitle %}{{ request }} · richiesta del {{ requested_at | moment }}{% endblock %}
+
+{% block body %}
+  <h2 class="section">La richiesta</h2>
+  <p style="margin: 0; font-size: 14px">{{ request }}</p>
+
+  {% if conflicts %}
+  <p style="margin-top: 10px"><span class="pill bad">Non sostenibile</span></p>
+  <ul style="margin: 6px 0 0; padding-left: 18px; color: var(--danger)">
+    {% for message in conflicts %}<li>{{ message }}</li>{% endfor %}
+  </ul>
+  {% elif warnings %}
+  <p style="margin-top: 10px"><span class="pill warn">Sostenibile con attenzione</span></p>
+  <ul style="margin: 6px 0 0; padding-left: 18px; color: var(--warn)">
+    {% for message in warnings %}<li>{{ message }}</li>{% endfor %}
+  </ul>
+  {% else %}
+  <p style="margin-top: 10px"><span class="pill good">Assorbibile dal piano</span></p>
+  {% endif %}
+
+  {% if effects %}
+  <h2 class="section">Prima e dopo</h2>
+  <div class="axis">
+    {% for tick in axis %}
+    <span style="left: {{ tick.offset }}%">{{ tick.day | day }}</span>
+    {% endfor %}
+  </div>
+  <p style="margin: 0 0 6px 30%; font-size: 8px; color: var(--dim)">
+    tratteggio: piano attuale · pieno: piano proposto
+  </p>
+  <table>
+    <tbody>
+      {% for effect in effects %}
+      <tr>
+        <td style="width: 30%">
+          <span class="swatch" style="background: {{ effect.color }}"></span>{{ effect.title }}
+          <div style="color: var(--dim); font-size: 9px; padding-left: 14px">{{ effect.project }}</div>
+        </td>
+        <td style="width: 70%">
+          {# Tratteggiata la situazione attuale, piena quella proposta. #}
+          <div class="track" style="margin-bottom: 3px">
+            {% for tick in axis %}
+            <i class="tick" style="left: {{ tick.offset }}%"></i>
+            {% endfor %}
+            {% if effect.before_bar.width %}
+            <i class="bar ghost"
+               style="left: {{ effect.before_bar.offset }}%; width: {{ effect.before_bar.width }}%"></i>
+            {% endif %}
+          </div>
+          <div class="track">
+            {% for tick in axis %}
+            <i class="tick" style="left: {{ tick.offset }}%"></i>
+            {% endfor %}
+            {% if effect.after_bar.width %}
+            <i class="bar"
+               style="left: {{ effect.after_bar.offset }}%; width: {{ effect.after_bar.width }}%;
+                      background: {{ effect.color }}"></i>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 class="section">Effetti</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Attività</th>
+        <th>Consegna attuale</th>
+        <th>Nuova consegna</th>
+        <th class="num">Effetto</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for effect in effects %}
+      <tr>
+        <td>{{ effect.title }}</td>
+        <td>{{ effect.old_delivery | longday }}</td>
+        <td>{{ effect.new_delivery | longday }}</td>
+        <td class="num">
+          <span class="pill {{ 'bad' if effect.shift_days > 0 else ('good' if effect.shift_days < 0 else '') }}">
+            {{ effect.effect }}
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <h2 class="section">Effetti</h2>
+  <p class="empty">Nessuna consegna già pianificata cambia data.</p>
+  {% endif %}
+
+  {% if notes %}
+  <div class="note">{{ notes }}</div>
+  {% endif %}
+{% endblock %}

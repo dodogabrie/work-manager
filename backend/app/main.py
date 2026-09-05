@@ -24,11 +24,13 @@ from .api import (
     planning,
     projects,
     proposals,
+    reports,
     share,
     tasks,
     tokens,
 )
 from .config import settings
+from .reports import RendererUnavailableError
 from .services.proposals import (
     HardConflictError,
     ProposalError,
@@ -62,7 +64,7 @@ app.add_middleware(
 for router in (
     auth.router, tasks.router, planning.router, proposals.router,
     capacity.router, history.router, share.router, tokens.router,
-    projects.router, integrations.router,
+    projects.router, integrations.router, reports.router,
 ):
     app.include_router(router)
 
@@ -101,6 +103,13 @@ def _not_found(request: Request, exc: LookupError) -> JSONResponse:
 @app.exception_handler(InvalidTransitionError)
 def _invalid_transition(request: Request, exc: InvalidTransitionError) -> JSONResponse:
     return _error(409, str(exc))
+
+
+@app.exception_handler(RendererUnavailableError)
+def _no_renderer(request: Request, exc: RendererUnavailableError) -> JSONResponse:
+    """§20: senza browser headless il report non è generabile — è un servizio
+    mancante, non una richiesta sbagliata."""
+    return _error(503, f"generazione report non disponibile: {exc}")
 
 
 @app.exception_handler(ValueError)

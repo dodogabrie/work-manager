@@ -39,12 +39,19 @@ export function originLabel(origin: string): string {
   return ORIGINS[origin.toUpperCase()] ?? origin
 }
 
-/** Le entità coinvolte sono un JSON libero: se ne mostra una sintesi onesta. */
+/** Le entità coinvolte sono un JSON libero (`{tasks: [...], proposal_id: "…"}`):
+ *  se ne mostra una sintesi onesta, saltando le liste vuote che sarebbero solo
+ *  rumore in ogni riga. */
 export function entityLabels(entities: Record<string, unknown>): string[] {
-  return Object.entries(entities).map(([key, value]) => {
-    const count = Array.isArray(value) ? value.length : 1
-    return Array.isArray(value) ? `${key}: ${count}` : `${key}: ${String(value).slice(0, 8)}`
-  })
+  const out: string[] = []
+  for (const [key, value] of Object.entries(entities)) {
+    if (Array.isArray(value)) {
+      if (value.length) out.push(`${key}: ${value.length}`)
+    } else if (value != null) {
+      out.push(`${key}: ${String(value).slice(0, 8)}`)
+    }
+  }
+  return out
 }
 
 export const useHistoryStore = defineStore('history', () => {

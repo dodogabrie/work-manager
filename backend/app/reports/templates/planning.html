@@ -1,0 +1,133 @@
+{# §20: intervallo, progetti, task, effort, timeline, consegne, capacità, note. #}
+{% extends "base.html" %}
+
+{% block subtitle %}Dal {{ start | longday }} al {{ end | longday }}{% endblock %}
+
+{% block body %}
+  <h2 class="section">Progetti</h2>
+  {% if projects %}
+  <table>
+    <thead>
+      <tr>
+        <th>Progetto</th>
+        <th class="num">Attività</th>
+        <th class="num">Effort pianificato</th>
+        <th class="num">Quota</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for project in projects %}
+      <tr>
+        <td><span class="swatch" style="background: {{ project.color }}"></span>{{ project.name }}</td>
+        <td class="num">{{ project.tasks }}</td>
+        <td class="num">{{ project.minutes | hm }}</td>
+        <td class="num">
+          {{ (project.minutes * 100 // total_minutes) if total_minutes else 0 }}%
+        </td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td><strong>Totale</strong></td>
+        <td class="num"><strong>{{ tasks | length }}</strong></td>
+        <td class="num"><strong>{{ total_minutes | hm }}</strong></td>
+        <td class="num"></td>
+      </tr>
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">Nessuna attività pianificata nell'intervallo.</p>
+  {% endif %}
+
+  {% if tasks %}
+  <h2 class="section">Timeline</h2>
+  <div class="axis">
+    {% for tick in axis %}
+    <span style="left: {{ tick.offset }}%">{{ tick.day | day }}</span>
+    {% endfor %}
+  </div>
+  <table>
+    <tbody>
+      {% for task in tasks %}
+      <tr>
+        <td style="width: 30%">
+          <span class="swatch" style="background: {{ task.color }}"></span>{{ task.title }}
+          <div style="color: var(--dim); font-size: 9px; padding-left: 14px">{{ task.project }}</div>
+        </td>
+        <td style="width: 70%; padding-top: 10px">
+          <div class="track">
+            {% for tick in axis %}
+            <i class="tick" style="left: {{ tick.offset }}%"></i>
+            {% endfor %}
+            {% if task.bar.width %}
+            <i class="bar"
+               style="left: {{ task.bar.offset }}%; width: {{ task.bar.width }}%;
+                      background: {{ task.color }}"></i>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 class="section">Attività e consegne previste</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Attività</th>
+        <th>Progetto</th>
+        <th>Allocazione</th>
+        <th class="num">Effort</th>
+        <th>Consegna prevista</th>
+        <th>Stato</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in tasks %}
+      <tr>
+        <td>{{ task.title }}</td>
+        <td>{{ task.project }}</td>
+        <td>{{ task.start | day }} – {{ task.end | day }}</td>
+        <td class="num">{{ task.minutes | hm }}</td>
+        <td>{{ task.delivery | longday }}</td>
+        <td><span class="pill">{{ task.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <h2 class="section">Capacità</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Settimana</th>
+        <th class="num">Disponibile</th>
+        <th class="num">Pianificato</th>
+        <th style="width: 32%">Occupazione</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for week in weeks %}
+      <tr>
+        <td>{{ week.start | day }} – {{ week.end | day }}</td>
+        <td class="num">{{ week.available | hm }}</td>
+        <td class="num">{{ week.planned | hm }}</td>
+        <td>
+          <div class="track" style="margin-top: 2px">
+            {% if week.fill %}
+            <i class="bar"
+               style="left: 0; width: {{ week.fill }}%;
+                      background: {{ 'var(--danger)' if week.over else 'var(--accent)' }}"></i>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if notes %}
+  <div class="note">{{ notes }}</div>
+  {% endif %}
+{% endblock %}

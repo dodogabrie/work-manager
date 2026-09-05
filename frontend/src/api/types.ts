@@ -212,3 +212,17 @@ export interface ShareLinkCreated extends ShareLink {
   token: string
   url: string
 }
+
+/** GET /api/share/{token}/planning -> TaskManagerView (§5.2, §27).
+    Deliberatamente povero: è tutto ciò che un manager può vedere. */
+export interface ManagerTask {
+  id: string
+  title: string
+  project: string | null
+  project_color: string | null
+  planned_effort_minutes: number
+  allocation_start: string | null
+  allocation_end: string | null
+  delivery_date: string | null
+  status: 'PLANNED' | 'IN_PROGRESS' | 'DELIVERED' | 'BLOCKED' | 'CANCELLED' | 'ARCHIVED'
+}

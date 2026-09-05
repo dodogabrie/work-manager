@@ -27,7 +27,9 @@ def weekly_capacity(session: Session) -> dict[int, int]:
 def set_weekly_capacity(session: Session, minutes_by_weekday: dict[int, int]) -> None:
     """Capacità standard. È una configurazione, non un evento sul piano: il
     ricalcolo passa comunque da una proposal alla prima simulazione (§11.2)."""
-    if not session.scalars(select(WeeklyCapacity.weekday)).first():
+    # `is None` e non `if not ...`: il lunedì è weekday 0, che è falsy, quindi
+    # una tabella già popolata verrebbe riseminata a ogni salvataggio.
+    if session.scalars(select(WeeklyCapacity.weekday)).first() is None:
         # Un aggiornamento parziale non deve azzerare i giorni non citati.
         session.add_all(
             WeeklyCapacity(weekday=w, minutes=m) for w, m in DEFAULT_WEEKLY.items()

@@ -15,6 +15,7 @@ from ..schemas import (
     CapacityView,
     ExceptionOrProposal,
     ProposalView,
+    WeeklyCapacityIn,
 )
 from ..services import capacity as service
 from .deps import Caller, DbSession, Today
@@ -48,6 +49,17 @@ def _result(value: CapacityException | PlanningProposal | None) -> ExceptionOrPr
     if value is None:
         raise HTTPException(404, "capacity exception not found")
     return ExceptionOrProposal(exception=CapacityExceptionView.model_validate(value))
+
+
+@router.put("/weekly", response_model=CapacityView)
+def set_weekly(
+    payload: WeeklyCapacityIn, session: DbSession, principal: Caller, day: Today,
+) -> CapacityView:
+    """§11.2: la capacità standard è configurazione, non un evento sul piano.
+    Non genera quindi una proposal qui; il piano viene riverificato alla prima
+    simulazione, e un'eventuale riduzione emerge come tale."""
+    service.set_weekly_capacity(session, payload.minutes)
+    return get_capacity(session, principal, day)
 
 
 @router.post("/exceptions", response_model=ExceptionOrProposal, status_code=201)

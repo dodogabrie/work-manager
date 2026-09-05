@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     #: significherebbe ricompilare per cambiare ambiente.
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     tz: str = "Europe/Rome"
+    #: Dove finiscono i PDF/PNG generati (§20): un report è un allegato, resta su disco.
+    reports_dir: str = "data/reports"
     #: APScheduler in-process (§32). Off nei test e nei comandi CLI.
     enable_jobs: bool = True
 

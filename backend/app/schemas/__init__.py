@@ -16,7 +16,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..models import PlanningSegment, Task, TaskStatus
 
@@ -425,8 +425,47 @@ class ApiTokenCreatedView(ApiTokenView):
     token: str
 
 
+class WeeklyCapacityIn(BaseModel):
+    """Capacità standard settimanale (§11.2). Chiavi 0=lunedì .. 6=domenica."""
+
+    minutes: dict[int, int]
+
+    @field_validator("minutes")
+    @classmethod
+    def _check(cls, value: dict[int, int]) -> dict[int, int]:
+        for weekday, minutes in value.items():
+            if not 0 <= weekday <= 6:
+                raise ValueError("weekday must be between 0 (Monday) and 6 (Sunday)")
+            # Una giornata più lunga di 24h non è un errore di battitura da
+            # accettare in silenzio: lo scheduler la userebbe davvero.
+            if not 0 <= minutes <= 24 * 60:
+                raise ValueError("minutes must be between 0 and 1440")
+        return value
+
+
 class SessionView(BaseModel):
     subject: str
+
+
+# ---------------------------------------------------------------- report (§20, §21)
+
+class PlanningReportIn(BaseModel):
+    """§20. `notes` sono le note *pubbliche*: le scrive l'owner per il
+    destinatario del report. Le note interne del task non entrano mai (§27)."""
+
+    start: date | None = None
+    end: date | None = None
+    title: str = "Piano di lavoro"
+    notes: str | None = None
+    format: Literal["pdf", "png"] = "pdf"
+
+
+class ImpactReportIn(BaseModel):
+    """§21: l'impatto di una proposal, calcolato dalla sua simulazione."""
+
+    proposal_id: uuid.UUID
+    notes: str | None = None
+    format: Literal["pdf", "png"] = "pdf"
 
 
 CapacityView.model_rebuild()
