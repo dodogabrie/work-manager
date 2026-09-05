@@ -1,34 +1,37 @@
 # Deploy su sottodominio. Si usa insieme al compose di base:
 #   docker compose -f compose.yaml -f compose.prod.yaml up -d --build
 #
-# Il reverse proxy e TLS stanno fuori da qui (Caddy o nginx sull'host):
-# questo file espone solo la porta HTTP del frontend, che fa già da proxy
-# verso il backend. Vedi DEPLOY.md.
+# TLS e instradamento stanno fuori da qui: un tunnel Cloudflare punta a
+# 127.0.0.1:${HTTP_PORT}. Vedi DEPLOY.md.
+#
+# Nota sui tag `!reset` e `!override` (Compose >= 2.24): fra due file le liste
+# vengono UNITE, non sostituite. Senza questi tag `ports: []` non toglierebbe
+# nulla e il database resterebbe esposto su Internet.
 services:
   db:
-    ports: []                       # il database non si affaccia su Internet
+    ports: !reset []                    # il database non si affaccia fuori
     restart: unless-stopped
-    volumes:
+    volumes: !override
       - pgdata:/var/lib/postgresql/data
       - ./backups:/backups
 
   backend:
     restart: unless-stopped
-    volumes:
-      - ./secrets:/secrets:ro       # solo i segreti, non il sorgente
+    volumes: !override
+      - ./secrets:/secrets:ro           # i segreti sì, il sorgente no
     environment:
       ENABLE_JOBS: "true"
     command: >
       sh -c "alembic upgrade head &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000"
-    ports: []                       # raggiungibile solo dal frontend
+    ports: !reset []                    # raggiungibile solo dal frontend
 
   frontend:
     build:
       context: ./frontend
       target: prod
     restart: unless-stopped
-    volumes: []
-    command: []
-    ports:
+    volumes: !reset []
+    command: !reset null
+    ports: !override
       - "127.0.0.1:${HTTP_PORT:-8080}:80"

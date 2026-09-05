@@ -29,10 +29,10 @@ docker compose run --rm backend python -m app.cli secret          # -> SESSION_S
 Poi imposta:
 
 ```ini
-PUBLIC_BASE_URL=https://planner.edoardogabrielli.com
-CORS_ORIGINS=https://planner.edoardogabrielli.com
+PUBLIC_BASE_URL=https://work-planner.edoardogabrielli.com
+CORS_ORIGINS=https://work-planner.edoardogabrielli.com
 POSTGRES_PASSWORD=<una password robusta>
-HTTP_PORT=8080
+HTTP_PORT=8091
 TZ=Europe/Rome
 ```
 
@@ -47,25 +47,34 @@ docker compose -f compose.yaml -f compose.prod.yaml up -d --build
 
 Le migrazioni Alembic girano da sole all'avvio del backend.
 
-## 3. Reverse proxy e TLS
+## 3. Tunnel Cloudflare
 
-Il servizio ascolta su `127.0.0.1:8080`, non su Internet. Davanti serve un
-proxy che termini TLS. Con Caddy bastano due righe:
+Il servizio ascolta su `127.0.0.1:${HTTP_PORT}` e **non** su Internet: nessuna
+porta va aperta sul router. Ci pensa il tunnel Cloudflare già attivo su questa
+macchina, che termina TLS e instrada verso la porta locale.
 
+Aggiungi l'ingress in `/etc/cloudflared/config.yml`, **prima** del catch-all
+`http_status:404`:
+
+```yaml
+  - hostname: work-planner.edoardogabrielli.com
+    service: http://localhost:8091
 ```
-planner.edoardogabrielli.com {
-    reverse_proxy 127.0.0.1:8080
-}
+
+Poi crea il record DNS e riavvia:
+
+```bash
+sudo cloudflared tunnel route dns <TUNNEL_ID> work-planner.edoardogabrielli.com
+sudo systemctl restart cloudflared
 ```
 
-Caddy ottiene e rinnova il certificato da solo. Con nginx serve invece
-`certbot` e un blocco `server` con `proxy_pass http://127.0.0.1:8080`, più gli
-header `X-Forwarded-Proto` e `X-Forwarded-For`.
+Il deploy attuale usa la porta **8091** e il tunnel
+`54f148bf-8dfe-4fd0-ba03-ebea6133331a`.
 
 ## 4. Verifica
 
 ```bash
-curl -fsS https://planner.edoardogabrielli.com/health
+curl -fsS https://work-planner.edoardogabrielli.com/health
 ```
 
 Poi apri il sito, entra con la password owner, crea un task e controlla che il
