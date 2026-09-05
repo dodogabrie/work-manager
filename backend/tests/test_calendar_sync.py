@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from sqlalchemy import select
+
 from app.models import (
     ExternalCalendarEvent,
     PlanningProposal,
@@ -69,14 +71,14 @@ def planned(session, minutes=960):
 
 def segments(session):
     return sorted(
-        (s.day, s.task_id, s.minutes) for s in session.scalars(planning.select(PlanningSegment))
+        (s.day, s.task_id, s.minutes) for s in session.scalars(select(PlanningSegment))
     )
 
 
 def calendar_proposals(session):
     return list(
         session.scalars(
-            planning.select(PlanningProposal).where(
+            select(PlanningProposal).where(
                 PlanningProposal.kind == ProposalKind.CALENDAR_CHANGE
             )
         )
@@ -137,7 +139,7 @@ def test_cancelled_meeting_recovers_capacity_without_compacting(session):
     result = calendar_sync.sync_connection(session, conn, MON, feed())
 
     assert result.cancelled == 1
-    assert session.scalars(planning.select(ExternalCalendarEvent)).one().cancelled is True
+    assert session.scalars(select(ExternalCalendarEvent)).one().cancelled is True
     assert result.proposal is None
     assert calendar_proposals(session) == []
     assert segments(session) == before  # nessun anticipo, nessuna compattazione
@@ -163,12 +165,12 @@ def test_moved_meeting_is_a_single_variation_not_a_delete_plus_create(session):
     """§17.3: stesso UID, stessa riga — si aggiornano gli estremi."""
     conn = connection(session)
     calendar_sync.sync_connection(session, conn, MON, feed(meeting("m1", MON, 8, 10)))
-    original = session.scalars(planning.select(ExternalCalendarEvent)).one()
+    original = session.scalars(select(ExternalCalendarEvent)).one()
     original_id, original_start = original.id, original.starts_at
 
     calendar_sync.sync_connection(session, conn, MON, feed(meeting("m1", THU, 8, 10)))
 
-    row = session.scalars(planning.select(ExternalCalendarEvent)).one()
+    row = session.scalars(select(ExternalCalendarEvent)).one()
     assert row.id == original_id
     assert row.cancelled is False
     assert row.starts_at != original_start
