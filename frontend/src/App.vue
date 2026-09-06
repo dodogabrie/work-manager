@@ -39,6 +39,7 @@ const items = [
   order: 2;
   position: sticky;
   bottom: 0;
+  z-index: 35;  /* sopra le card sticky/proposal bar, sotto il bottom sheet (40) */
   display: flex;
   justify-content: space-around;
   background: var(--surface);
